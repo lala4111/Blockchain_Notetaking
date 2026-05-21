@@ -18,8 +18,51 @@
         <p id = "userMessage"> </p>
         <p>This content is only viewable if your login is successful</p>
         <button id = "addNote"> Add Note </button>
+        <div id="notesDashboard" style="margin-top: 20px;"></div>
     </div>
     <script>
+       
+const contractAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"; 
+
+const contractABI = [
+	{
+		"inputs": [
+			{ "internalType": "string", "name": "_title", "type": "string" },
+			{ "internalType": "string", "name": "_content", "type": "string" }
+		],
+		"name": "addNote",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+		"name": "notes",
+		"outputs": [
+			{ "internalType": "string", "name": "title", "type": "string" },
+			{ "internalType": "string", "name": "content", "type": "string" }
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+    {
+		"inputs": [],
+		"name": "getAllNotes",
+		"outputs": [
+			{
+				"components": [
+					{ "internalType": "string", "name": "title", "type": "string" },
+					{ "internalType": "string", "name": "content", "type": "string" }
+				],
+				"internalType": "struct Notes.Note[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
         const connectButton = document.getElementById('connectButton');
         const  protectedContent = document.getElementById('protectedContent');
         const userMessage = document.getElementById('userMessage');
@@ -37,6 +80,7 @@
                     const signer = await provider.getSigner();
                     userMessage.innerHTML = `You have logged with the address: ${await signer.getAddress()}`
                     addNote.innerHTML = "Add Note";
+                    fetchAndDisplayNotes();
 
                 }
                 catch (error){
@@ -54,7 +98,47 @@
             window.location.href = "add.html";
         }
 
+async function fetchAndDisplayNotes() {
+    const notesDashboard = document.getElementById('notesDashboard');
+    notesDashboard.innerHTML = "Loading notes..."; // temporary loading text
 
+    try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+        // grab the notes from the blockchain!
+        const allNotes = await contract.getAllNotes();
+        
+        notesDashboard.innerHTML = ""; // clear the loading text
+
+        if (allNotes.length === 0) {
+            notesDashboard.innerHTML = "<p>No notes found. Try adding one!</p>";
+            return;
+        }
+
+        // build a visual card for every note in the array
+        allNotes.forEach(note => {
+            const noteCard = document.createElement('div');
+            noteCard.style.border = "1px solid black";
+            noteCard.style.padding = "10px";
+            noteCard.style.margin = "10px auto";
+            noteCard.style.width = "50%";
+            noteCard.style.backgroundColor = "white";
+
+            noteCard.innerHTML = `
+                <h3>${note.title}</h3>
+                <p>${note.content}</p>
+            `;
+            
+            notesDashboard.appendChild(noteCard);
+        });
+
+    } catch (error) {
+        console.error("Oops:", error);
+        notesDashboard.innerHTML = "<p>Failed to load notes.</p>";
+    }
+}
 
     </script>
 </body>

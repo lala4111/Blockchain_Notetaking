@@ -15,6 +15,88 @@
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.12.1/ethers.umd.min.js"></script>
+<script>
+    const contractAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
+    const contractABI = [
+	{
+		"inputs": [
+			{ "internalType": "string", "name": "_title", "type": "string" },
+			{ "internalType": "string", "name": "_content", "type": "string" }
+		],
+		"name": "addNote",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+		"name": "notes",
+		"outputs": [
+			{ "internalType": "string", "name": "title", "type": "string" },
+			{ "internalType": "string", "name": "content", "type": "string" }
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+    {
+		"inputs": [],
+		"name": "getAllNotes",
+		"outputs": [
+			{
+				"components": [
+					{ "internalType": "string", "name": "title", "type": "string" },
+					{ "internalType": "string", "name": "content", "type": "string" }
+				],
+				"internalType": "struct Notes.Note[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+
+    // button 
+    const saveButton = document.getElementById("Save");
+
+    // button clicked, run this
+    saveButton.addEventListener("click", async () => {
+        const title = document.getElementById("Title").value;
+        const content = document.getElementById("Content").value;
+
+        // not empty
+        if (!title || !content) {
+            alert("Please fill in both the title and the note!");
+            return;
+        }
+
+        try {
+        
+            saveButton.innerText = "Saving to blockchain...";
+
+            // Connect to MetaMask
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+
+            // Connect to smart contract
+            const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+            const transaction = await contract.addNote(title, content);
+            
+            await transaction.wait();
+
+            alert("Success! Your note is now permanently on your local blockchain.");
+            
+            window.location.href = "index.html";
+
+        } catch (error) {
+            console.error("Oops, something went wrong:", error);
+            alert("Failed to save the note. Check the console for errors.");
+            saveButton.innerText = "Save Note";
+        }
+    });
+</script>
 
 
 </html>
